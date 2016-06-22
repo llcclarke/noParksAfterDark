@@ -1,4 +1,26 @@
-noParks.controller('DashCtrl', function($scope) { //links to Ionic
+angular.module('noParks.controllers', [])
+
+.controller('MapController', ['MapFactory','$scope','$http', 'routeGeneratorService', function( $scope, MapFactory, $http, routeGeneratorService) {
+  console.log('calling noParks controller');
+    var self = this;
+
+  self.hello = "Hello World";
+
+
+  self.currentRequest = [];
+
+  self.routeGenerator = function(userInput){
+    console.log('calling route')
+    routeGeneratorService.getLocation(userInput)
+    .then(function(response){
+      // console.log(response);
+      self.currentRequest.push(response);
+});
+}
+    }])
+
+
+.controller('DashCtrl', function($scope) { //links to Ionic
 var deploy = new Ionic.Deploy();
 
   // Update app code with new release from Ionic Deploy
@@ -24,20 +46,20 @@ var deploy = new Ionic.Deploy();
   };
 });
 
-noParks.controller('RouteRequestController', ['$scope','$http', 'routeGeneratorService',  function($scope, $http, routeGeneratorService){
-  var self = this;
+// noParks.controller('RouteRequestController', ['$scope','$http', 'routeGeneratorService',  function($scope, $http, routeGeneratorService){
+//   var self = this;
 
-  self.currentRequest = [];
+//   self.currentRequest = [];
 
-  $scope.routeGenerator = function(userInput){
+//   $scope.routeGenerator = function(userInput){
 
-    routeGeneratorService.getLocation(userInput)
-    .then(function(response){
-      console.log(response);
-      self.currentRequest.push(response);
-    });
-  };
-}]);
+//     routeGeneratorService.getLocation(userInput)
+//     .then(function(response){
+//       console.log(response);
+//       self.currentRequest.push(response);
+//     });
+//   };
+// }]);
 
 noParks.service('routeGeneratorService', ['$http', 'MapFactory', function($http, MapFactory) {
   var self = this;
@@ -46,17 +68,18 @@ noParks.service('routeGeneratorService', ['$http', 'MapFactory', function($http,
 //https://no-parks-after-dark-backend.herokuapp.com/route/api/?endtext=50%20commercial%20street%20london&starttext=100%20shoreditch%20high%20street%20london
 // https://no-parks-after-dark-backend.herokuapp.com/route/api/
 // ?endtext=50%20commercial%20street%20london&starttext=100%20shoreditch%20high%20street%20london&type=pedestrian&nightmode=park:-1,tunnel:-1
-
+console.log(mapContainer);
   self.getLocation= function(userInputLocation) {
     var location = userInputLocation;
-    var extraparams = '&type=pedestrian&nightmode=park:-1,tunnel:-1'
+    console.log(location);
+    var extraparams = '&nightmode=park:-1,tunnel:-1'
     var url = "https://no-parks-after-dark-backend.herokuapp.com/route/api/?" + location + extraparams;
     var data = JSON.stringify(location);
     var headers = { headers: { 'Content-Type': 'application/json' }, dataType: 'jsonp'};
     return $http.get(url).then(function(result) {
       self.status = '';
        routePoints(result);
-      // routeInstructions(result);
+      routeInstructions(result);
 
     })}
 
@@ -68,11 +91,16 @@ noParks.service('routeGeneratorService', ['$http', 'MapFactory', function($http,
             'app_id': app_id,
             'app_code': app_code
         });
+
         var maptypes = platform.createDefaultLayers();
-         map = new H.Map(document.getElementById('routeContainer'), maptypes.normal.map);
+                document.getElementById('mapContainer').innerHTML = ''
+
+         map = new H.Map(document.getElementById('mapContainer'), maptypes.normal.map);
+          var ui = H.ui.UI.createDefault(map, maptypes);
+                        var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
         var route = result.data.response.route;
         addRouteShapeToMap(route);
-        // addManueversToMap(route);
+        addManueversToMap(route);
       }
 
       function routeInstructions(result){
@@ -98,50 +126,47 @@ noParks.service('routeGeneratorService', ['$http', 'MapFactory', function($http,
              strokeColor: 'rgba(0, 128, 255, 0.7)'
            }
          });
-
+console.log(mapContainer);
          map.addObject(polyline);
          map.setViewBounds(polyline.getBounds(), true);
         }
 
 
-        // function addManueversToMap(route){
-        //  var svgMarkup = '<svg width="18" height="18" ' +
-        //    'xmlns="http://www.w3.org/2000/svg">' +
-        //    '<circle cx="8" cy="8" r="8" ' +
-        //      'fill="#1b468d " stroke="white" stroke-width="1"  />' +
-        //    '</svg>',
-        //    dotIcon = new H.map.Icon(svgMarkup, {anchor: {x:8, y:8}}),
-        //    group = new  H.map.Group(),
-        //    i,
-        //    j;
+        function addManueversToMap(route){
+         var svgMarkup = '<svg width="18" height="18" ' +
+           'xmlns="http://www.w3.org/2000/svg">' +
+           '<circle cx="8" cy="8" r="8" ' +
+             'fill="#1b468d " stroke="white" stroke-width="1"  />' +
+           '</svg>',
+           dotIcon = new H.map.Icon(svgMarkup, {anchor: {x:8, y:8}}),
+           group = new  H.map.Group(),
+           i,
+           j;
 
-        //    for (i = 0;  i < route[0].leg.length; i += 1) {
-        //    for (j = 0;  j < route[0].leg[i].maneuver.length; j += 1) {
-        //      maneuver = route[0].leg[i].maneuver[j];
-        //      var marker =  new H.map.Marker({
-        //        lat: maneuver.position.latitude,
-        //        lng: maneuver.position.longitude} ,
-        //        {icon: dotIcon});
-        //      marker.instruction = maneuver.instruction;
-        //      group.addObject(marker);
-        //    }
-        //  }
+           for (i = 0;  i < route[0].leg.length; i += 1) {
+           for (j = 0;  j < route[0].leg[i].maneuver.length; j += 1) {
+             maneuver = route[0].leg[i].maneuver[j];
+             var marker =  new H.map.Marker({
+               lat: maneuver.position.latitude,
+               lng: maneuver.position.longitude} ,
+               {icon: dotIcon});
+               console.log(maneuver.position.latitude);
+             marker.instruction = maneuver.instruction;
+             group.addObject(marker);
+           }
+         }
 
-  //        group.addEventListener('tap', function (evt) {
-  //          map.setCenter(evt.target.getPosition());
-  //          openBubble(
-  //             evt.target.getPosition(), evt.target.instruction);
-  //        }, false);
+         group.addEventListener('tap', function (evt) {
+           map.setCenter(evt.target.getPosition());
+           openBubble(
+              evt.target.getPosition(), evt.target.instruction);
+         }, false);
 
-         // map.addObject(group);
-        // }
+         map.addObject(group);
 
-  //   }).catch(function(res) {
-  //     console.log(res);
-  //     self.status = 'Failed';
-  //     return self.status;
-  //   });
-  // };
+
+
+  };
 
 function addWaypointsToPanel(waypoints){
 
@@ -170,6 +195,18 @@ function addSummaryToPanel(summary){
   summaryDiv.style.marginRight ='5%';
   summaryDiv.innerHTML = content;
   routeInstructionsContainer.appendChild(summaryDiv);
+}
+
+function openBubble(position, text){
+
+    bubble =  new H.ui.InfoBubble(
+      position,
+      {content: text});
+    ui.addBubble(bubble);
+    bubble.setPosition(position);
+    bubble.setContent(text);
+    bubble.open();
+
 }
 
 function addManueversToPanel(route){
@@ -210,24 +247,5 @@ function addManueversToPanel(route){
 }
 }]);
 
-noParks.controller('MapController', ['MapFactory', function( $scope, MapFactory) {
-  console.log('calling noParks controller');
-  this.hello = "Hello World";
-
-  this.map = new MapFactory;
 
 
-
-
-
-  // self.addMap = function(temp) {
-  //   new MapFactory(temp);
-  // };
-
-
-  //                  self.temp = function(){
-  //                   return {center: {lat:52.5160, lng:13.3779}, zoom: 13};
-  //                  };
-
-
-}]);
