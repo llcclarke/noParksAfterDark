@@ -1,6 +1,5 @@
 angular.module('noParks.factories', [])
 
-
 .factory('MapFactory', ["$cordovaGeolocation",
     function($cordovaGeolocation) {
         var app_code = 'pG2gTxRQDbxVAsdDMCN1WA';
@@ -18,7 +17,7 @@ angular.module('noParks.factories', [])
             enableHighAccuracy: false
         };
 
-        var lat, long;
+        var lat, long;//redundent?
 
         function createMap() {
             return $cordovaGeolocation
@@ -31,19 +30,18 @@ angular.module('noParks.factories', [])
                         lat: lat,
                         lng: long
                     },
-                    zoom: 13
-                }
+                    zoom: 16
+                };
             });
         }
 
 var icon = new H.map.Icon('./img/marker.png');
 
-
 function map(){
       createMap().then((data) => {
-               var map = new H.Map(document.getElementById('mapContainer'), maptypes.normal.map, data);
-               var marker = new H.map.Marker({lat:lat,lng:long},{ icon: icon });
-               map.addObject(marker);
+              var map = new H.Map(document.getElementById('mapContainer'), maptypes.normal.map, data);
+              var marker = new H.map.Marker({lat:lat,lng:long},{ icon: icon });
+              map.addObject(marker);
                         var ui = H.ui.UI.createDefault(map, maptypes);
                         var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
                                       return map;
